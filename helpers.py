@@ -5,8 +5,7 @@ import matplotlib.pyplot as plt
 import seaborn as sns
 import sklearn.metrics as sk
 
-FeaturesToKeep = ["gaze_0_x","gaze_0_y","gaze_0_z",
-                  "gaze_angle_x", "gaze_angle_y",
+featuresToKeep = ["gaze_0_x","gaze_0_y","gaze_0_z","gaze_angle_x", "gaze_angle_y",
                   "dgaze_0_x", "dgaze_0_y", "dgaze_angle_y", 
                   "AU01_r","AU04_r","AU10_r","AU12_r","AU45_r", 
                   "pose_Tx", "pose_Ty", "pose_Tz", "pose_Ry", 
@@ -21,7 +20,7 @@ def displayConfusion(actual, predicted):
     sk.ConfusionMatrixDisplay(sk.confusion_matrix(actual, predicted)).plot()
     print("Accuracy is ", round(sk.accuracy_score(actual, predicted) * 100, 2), "%")
 
-def filterColumn(df, colList = FeaturesToKeep):
+def filterColumn(df, colList = featuresToKeep):
     currdf = df
     for col in currdf.columns:
         if (str(col) not in colList):
@@ -29,7 +28,7 @@ def filterColumn(df, colList = FeaturesToKeep):
 
     return currdf
 
-def filterConfidence(df, colList = FeaturesToKeep):
+def filterConfidence(df, colList = featuresToKeep):
     currdf = df
     currdf = filterColumn(currdf, colList)
 
