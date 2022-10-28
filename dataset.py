@@ -6,15 +6,7 @@ import numpy as np
 
 import tensorflow_decision_forests as tfdf
 from sklearn.model_selection import train_test_split
-
 import helpers
-
-featuresToKeep = ["gaze_0_x","gaze_0_y","gaze_0_z","gaze_angle_x", "gaze_angle_y",
-                  "dgaze_0_x", "dgaze_0_y", "dgaze_angle_y", 
-                  "AU01_r","AU04_r","AU10_r","AU12_r","AU45_r", 
-                  "pose_Tx", "pose_Ty", "pose_Tz", "pose_Ry", 
-                  "Result",
-                  "confidence"]
 
 # create a single dataset from a specified path (must be all truth or all lie)
 def createDatasetSingle(path, truth):
@@ -56,7 +48,7 @@ def createDatasetGeneral(truthPath, liePath, testRatio):
 # the modelObj is the training model object
 # keepList is the list of features used to predict
 # prints the possibility of lie and truth in the video
-def perdictSingleVideo(path, modelName, modelObj, keepList=featuresToKeep):
+def perdictSingleVideo(path, modelName, modelObj):
 
   df = pd.concat(map(pd.read_csv, glob.glob(os.path.join(path+"*.csv")))).reset_index()
   helpers.addGazeDelta(df)
@@ -81,10 +73,9 @@ def perdictSingleVideo(path, modelName, modelObj, keepList=featuresToKeep):
   print("Lie Possibility: ", round(counterLie/res.shape[0] * 100, 2), "%")
   print("Truth Possibility: ", round(counterTrue/res.shape[0]* 100, 2), "%")
 
-def preprocessing(folderPath, trueOrFalse, minConfidence = 0.9, numOfFrames = 10):
+def preprocessing(folderPath, trueOrFalse, numOfFrames, minConfidence = 0.9):
   csv_files = glob.glob(os.path.join(folderPath, "*.csv"))
   dropped = 0
-  processed_files = 0
   data = []
   label = []
 
@@ -134,8 +125,8 @@ def preprocessing(folderPath, trueOrFalse, minConfidence = 0.9, numOfFrames = 10
 
 
 def path_preprocessing(truthFolderPath, lieFolderPath, minConfidence = 0.9, numOfFrames = 10):
-  truth_data, truth_label = preprocessing(truthFolderPath, True, minConfidence, numOfFrames)
-  lie_data, lie_label = preprocessing(lieFolderPath, False, minConfidence, numOfFrames) 
+  truth_data, truth_label = preprocessing(truthFolderPath, True, numOfFrames, minConfidence)
+  lie_data, lie_label = preprocessing(lieFolderPath, False,numOfFrames, minConfidence) 
   
   total_X = truth_data + lie_data
   total_Y = truth_label + lie_label
