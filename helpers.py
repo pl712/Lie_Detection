@@ -4,6 +4,7 @@ import numpy as np
 import matplotlib.pyplot as plt
 import seaborn as sns
 import sklearn.metrics as sk
+import tensorflow_decision_forests as tfdf
 
 featuresToKeep = ["gaze_0_x","gaze_0_y","gaze_0_z","gaze_angle_x", "gaze_angle_y",
                   "dgaze_0_x", "dgaze_0_y", "dgaze_angle_y", 
@@ -60,5 +61,35 @@ def addGazeDelta(currCSV):
         currCSV.at[j, 'dgaze_angle_y'] = abs(currCSV.at[j - 10, 'gaze_angle_y'] - currCSV.at[j, 'gaze_angle_y'])
 
   return currCSV
+
+
+def predictRF(df, modelName, modelObj):
+    
+    counterLie, counterTrue = 0, 0
+
+    if modelName == 'tf':
+        dataSet = tfdf.keras.pd_dataframe_to_tf_dataset(df)
+        res = pd.DataFrame(modelObj.predict(dataSet))
+
+        for i in range(res.shape[0]):
+            if res.iloc[i,0] > 0.5: 
+                res.iloc[i] = 1 
+            else:
+                res.iloc[i] = 0
+
+    elif modelName == "sk":
+        res = modelObj.predict(df)
+        temp = res.shape[0]
+        res = pd.DataFrame(np.reshape(res, (temp, 1)))
+
+    for i in range(res.shape[0]):
+        if res.iloc[i][0] > 0.5:
+            counterTrue = counterTrue + 1
+        else:
+            counterLie = counterLie + 1
+            
+    print("Lie Possibility: ", round(counterLie/res.shape[0] * 100, 2), "%")
+    print("Truth Possibility: ", round(counterTrue/res.shape[0]* 100, 2), "%")
+    
 
 
