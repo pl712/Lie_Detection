@@ -13,6 +13,8 @@ featuresToKeep = ["gaze_0_x","gaze_0_y","gaze_0_z",
                   "Result",
                   "confidence"]
 
+
+
 def displayHeatmap(df):
     plt.figure(figsize=(16, 6))
     sns.heatmap(df.corr(), vmin=-1, vmax=1, annot=True, cmap='BrBG')
