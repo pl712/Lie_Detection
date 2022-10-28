@@ -51,3 +51,15 @@ def addTFLabel(df, TrueOrFalse):
 def shuffleDF(df):
     return df.sample(frac=1)
 
+def addGazeDelta(currCSV):
+  for j in range(10, currCSV.shape[0]):
+      if currCSV.iloc[[j - 10]]["confidence"].iloc[0] >= 0.8:
+        currCSV.at[j, 'dgaze_0_x'] = abs(currCSV.at[j - 10, 'gaze_0_x'] - currCSV.at[j, 'gaze_0_x'])
+        currCSV.at[j, 'dgaze_0_y'] = abs(currCSV.at[j - 10, 'gaze_0_y'] - currCSV.at[j, 'gaze_0_y'])
+        currCSV.at[j, 'dgaze_0_z'] = abs(currCSV.at[j - 10, 'gaze_0_z'] - currCSV.at[j, 'gaze_0_z'])
+        currCSV.at[j, 'dgaze_angle_x'] = abs(currCSV.at[j - 10, 'gaze_angle_x'] - currCSV.at[j, 'gaze_angle_x'])
+        currCSV.at[j, 'dgaze_angle_y'] = abs(currCSV.at[j - 10, 'gaze_angle_y'] - currCSV.at[j, 'gaze_angle_y'])
+
+  return currCSV
+
+
