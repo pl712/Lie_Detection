@@ -9,6 +9,9 @@ from sklearn.model_selection import train_test_split
 
 import helpers
 
+truthPath = './processed_truth/'
+liePath = './processed_lie/'
+
 featuresToKeep = ["gaze_0_x","gaze_0_y","gaze_0_z","gaze_angle_x", "gaze_angle_y",
                   "dgaze_0_x", "dgaze_0_y", "dgaze_angle_y", 
                   "AU01_r","AU04_r","AU10_r","AU12_r","AU45_r", 
