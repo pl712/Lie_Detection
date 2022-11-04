@@ -13,8 +13,6 @@ featuresToKeep = ["gaze_0_x","gaze_0_y","gaze_0_z",
                   "Result",
                   "confidence"]
 
-
-
 def displayHeatmap(df):
     plt.figure(figsize=(16, 6))
     sns.heatmap(df.corr(), vmin=-1, vmax=1, annot=True, cmap='BrBG')
@@ -63,7 +61,6 @@ def addGazeDelta(currCSV):
         currCSV.at[j, 'dgaze_angle_y'] = abs(currCSV.at[j - 10, 'gaze_angle_y'] - currCSV.at[j, 'gaze_angle_y'])
 
   return currCSV
-
 
 def predictRF(df, modelName, modelObj):
     
