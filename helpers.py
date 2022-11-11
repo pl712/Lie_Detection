@@ -12,23 +12,32 @@ featuresToKeep = ["gaze_0_x","gaze_0_y","gaze_0_z","gaze_angle_x", "gaze_angle_y
                   "Result",
                   "confidence", "Person"]
 
-def shuffleByPerson(df, ratio):
+def shuffleByPerson(df, ratio, lst):
 
-    df = df.sort_values(by=['Person']) # Sort by person
+    if lst == []:
+        df = df.sort_values(by=['Person']) # Sort by person
 
-    index = int(df.shape[0] * (1 - ratio)) # Get the index of the last person to be in the training set
-    tempnum = df["Person"].iloc[index] # Get the person number of the last person to be in the training set
+        index = int(df.shape[0] * (1 - ratio)) # Get the index of the last person to be in the training set
+        tempnum = df["Person"].iloc[index] # Get the person number of the last person to be in the training set
 
-    temp = index
-    while temp < df.shape[0]:
-        temp += 1
-        if df["Person"].iloc[temp] != tempnum:
-            index = temp - 1
-            break
+        temp = index
+        while temp < df.shape[0]:
+            temp += 1
+            if df["Person"].iloc[temp] != tempnum:
+                index = temp - 1
+                break
 
-    print(f"Persons 0 to {tempnum} are in the training set, and {tempnum + 1} to {df['Person'].iloc[-1]} are in the testing set")
-    
-    return df.iloc[:index], df.iloc[index:]
+        print(f"Persons 0 to {tempnum} are in the training set, and {tempnum + 1} to {df['Person'].iloc[-1]} are in the testing set")
+        
+        return df.iloc[:index], df.iloc[index:]
+    else:
+        
+        Test = df.loc[df['Person'].isin(lst)]
+        Train = df.loc[~df['Person'].isin(lst)]
+
+        return Train, Test
+        
+
 
 
 

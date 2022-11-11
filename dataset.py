@@ -38,14 +38,14 @@ def createDatasetDual(truthPath, liePath):
 # input a truthpath and a liepath, create a dual dataset and create a train
 # test split based on the testRatio
 # outputs total train, train with x, train with y, test with x, and test with y
-def createDatasetGeneral(truthPath, liePath, testRatio, byPerson = False):
+def createDatasetGeneral(truthPath, liePath, testRatio, byPerson = False, personlst = []):
   dfT = createDatasetSingle(truthPath, True)
   dfL = createDatasetSingle(liePath, False)
   
   dfTotal = helpers.veticalMerge(dfT, dfL, shuffle=True)
   
   if byPerson:
-    Train, Test = helpers.shuffleByPerson(dfTotal, testRatio)
+    Train, Test = helpers.shuffleByPerson(dfTotal, testRatio, personlst)
   else:
     Train, Test = train_test_split(dfTotal, test_size=testRatio, shuffle=False)
 
