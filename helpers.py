@@ -5,13 +5,32 @@ import seaborn as sns
 import sklearn.metrics as sk
 import tensorflow_decision_forests as tfdf
 
-featuresToKeep = ["gaze_0_x","gaze_0_y","gaze_0_z",
-                  "gaze_angle_x", "gaze_angle_y",
+featuresToKeep = ["gaze_0_x","gaze_0_y","gaze_0_z","gaze_angle_x", "gaze_angle_y",
                   "dgaze_0_x", "dgaze_0_y", "dgaze_angle_y", 
                   "AU01_r","AU04_r","AU10_r","AU12_r","AU45_r", 
                   "pose_Tx", "pose_Ty", "pose_Tz", "pose_Ry", 
                   "Result",
-                  "confidence"]
+                  "confidence", "Person"]
+
+def shuffleByPerson(df, ratio):
+
+    df = df.sort_values(by=['Person'])
+    index = int(df.shape[0] * ratio)
+    tempnum = df["Person"].iloc[index]
+
+    temp = index
+    while temp < df.shape[0]:
+        temp += 1
+        if df["Person"].iloc[temp] != tempnum:
+            index = temp - 1
+            break
+
+    print(f"Persons 0 to {tempnum} are in the training set, and {tempnum + 1} to {df['Person'].iloc[-1]} are in the testing set")
+    
+    Train, Test = df.iloc[:index], df.iloc[index:]
+
+
+
 
 def displayHeatmap(df):
     plt.figure(figsize=(16, 6))
