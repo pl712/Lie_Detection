@@ -14,9 +14,10 @@ featuresToKeep = ["gaze_0_x","gaze_0_y","gaze_0_z","gaze_angle_x", "gaze_angle_y
 
 def shuffleByPerson(df, ratio):
 
-    df = df.sort_values(by=['Person'])
-    index = int(df.shape[0] * ratio)
-    tempnum = df["Person"].iloc[index]
+    df = df.sort_values(by=['Person']) # Sort by person
+
+    index = int(df.shape[0] * (1 - ratio)) # Get the index of the last person to be in the training set
+    tempnum = df["Person"].iloc[index] # Get the person number of the last person to be in the training set
 
     temp = index
     while temp < df.shape[0]:
@@ -27,7 +28,7 @@ def shuffleByPerson(df, ratio):
 
     print(f"Persons 0 to {tempnum} are in the training set, and {tempnum + 1} to {df['Person'].iloc[-1]} are in the testing set")
     
-    Train, Test = df.iloc[:index], df.iloc[index:]
+    return df.iloc[:index], df.iloc[index:]
 
 
 

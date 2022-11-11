@@ -49,8 +49,9 @@ def createDatasetGeneral(truthPath, liePath, testRatio, byPerson = False):
   else:
     Train, Test = train_test_split(dfTotal, test_size=testRatio, shuffle=False)
 
-  Xtrain, Ytrain = Train.drop(columns = ["Result", "Person"]), Train["Result"]
-  Xtest, Ytest = Test.drop(columns = ["Result", "Person"]), Test["Result"]
+  Xtrain, Ytrain = Train.reset_index().drop(columns = ["Result", "Person", "index", "level_0"]), Train["Result"]
+  Xtest, Ytest = Test.reset_index().drop(columns = ["Result", "Person", "index", "level_0"]), Test["Result"]
+  Train = Train.reset_index().drop(columns = ["index", "Person", "level_0"])
 
   return Train, Xtrain, Ytrain, Xtest, Ytest
 
