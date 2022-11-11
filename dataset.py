@@ -12,12 +12,7 @@ import helpers
 truthPath = './processed_truth/'
 liePath = './processed_lie/'
 
-featuresToKeep = ["gaze_0_x","gaze_0_y","gaze_0_z","gaze_angle_x", "gaze_angle_y",
-                  "dgaze_0_x", "dgaze_0_y", "dgaze_angle_y", 
-                  "AU01_r","AU04_r","AU10_r","AU12_r","AU45_r", 
-                  "pose_Tx", "pose_Ty", "pose_Tz", "pose_Ry", 
-                  "Result",
-                  "confidence"]
+featuresToKeep = helpers.featuresToKeep
 
 # create a single dataset from a specified path (must be all truth or all lie)
 def createDatasetSingle(path, truth):
@@ -43,14 +38,19 @@ def createDatasetDual(truthPath, liePath):
 # input a truthpath and a liepath, create a dual dataset and create a train
 # test split based on the testRatio
 # outputs total train, train with x, train with y, test with x, and test with y
-def createDatasetGeneral(truthPath, liePath, testRatio):
+def createDatasetGeneral(truthPath, liePath, testRatio, byPerson = False):
   dfT = createDatasetSingle(truthPath, True)
   dfL = createDatasetSingle(liePath, False)
-
+  
   dfTotal = helpers.veticalMerge(dfT, dfL, shuffle=True)
-  Train, Test = train_test_split(dfTotal, test_size=testRatio, shuffle=False)
-  Xtrain, Ytrain = Train.drop(columns = ["Result"]), Train["Result"]
-  Xtest, Ytest = Test.drop(columns = ["Result"]), Test["Result"]
+  
+  if byPerson:
+    Train, Test = helpers.shuffleByPerson(dfTotal, testRatio)
+  else:
+    Train, Test = train_test_split(dfTotal, test_size=testRatio, shuffle=False)
+
+  Xtrain, Ytrain = Train.drop(columns = ["Result", "Person"]), Train["Result"]
+  Xtest, Ytest = Test.drop(columns = ["Result", "Person"]), Test["Result"]
 
   return Train, Xtrain, Ytrain, Xtest, Ytest
 
@@ -83,6 +83,15 @@ def perdictSingleVideo(path, modelName, modelObj, keepList=featuresToKeep):
 
   print("Lie Possibility: ", round(counterLie/res.shape[0] * 100, 2), "%")
   print("Truth Possibility: ", round(counterTrue/res.shape[0]* 100, 2), "%")
+
+
+
+
+
+
+
+
+
 
 def preprocessing(folderPath, trueOrFalse, minConfidence = 0.9, numOfFrames = 10):
   csv_files = glob.glob(os.path.join(folderPath, "*.csv"))
