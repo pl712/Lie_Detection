@@ -32,8 +32,8 @@ def shuffleByPerson(df, ratio, lst):
         return df.iloc[:index], df.iloc[index:]
     else:
         
-        Test = df.loc[df['Person'].isin(lst)]
-        Train = df.loc[~df['Person'].isin(lst)]
+        Test = df.loc[~df['Person'].isin(lst)]
+        Train = df.loc[df['Person'].isin(lst)]
 
         return Train, Test
         
