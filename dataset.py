@@ -84,17 +84,9 @@ def perdictSingleVideo(path, modelName, modelObj, keepList=featuresToKeep):
 
   print("Lie Possibility: ", round(counterLie/res.shape[0] * 100, 2), "%")
   print("Truth Possibility: ", round(counterTrue/res.shape[0]* 100, 2), "%")
+  
 
-
-
-
-
-
-
-
-
-
-def preprocessing(folderPath, trueOrFalse, minConfidence = 0.9, numOfFrames = 10):
+def preprocessing(folderPath, trueOrFalse, minConfidence = 0.9, numOfFrames = 10, byPerson = False, personlst = []):
   csv_files = glob.glob(os.path.join(folderPath, "*.csv"))
   dropped = 0
   data = []
