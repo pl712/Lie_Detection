@@ -9,10 +9,9 @@ featuresToKeep = ["gaze_0_x","gaze_0_y","gaze_0_z","gaze_angle_x", "gaze_angle_y
                   "dgaze_0_x", "dgaze_0_y", "dgaze_angle_y", 
                   "AU01_r","AU04_r","AU10_r","AU12_r","AU45_r", 
                   "pose_Tx", "pose_Ty", "pose_Tz", "pose_Ry", 
-                  "Result",
-                  "confidence", "Person"]
+                  "Result", "confidence", "Person"]
 
-def shuffleByPerson(df, ratio, lst):
+def shuffleByPerson(df, ratio = 0.2, lst = []):
 
     if lst == []:
         df = df.sort_values(by=['Person']) # Sort by person
@@ -37,9 +36,6 @@ def shuffleByPerson(df, ratio, lst):
 
         return Train, Test
         
-
-
-
 
 
 def displayHeatmap(df):
