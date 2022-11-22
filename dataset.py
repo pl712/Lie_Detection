@@ -23,22 +23,10 @@ def createDatasetSingle(path, truth):
 
   return df
 
-# create a dual dataset, one with truth dataset and one with false dataset, 
-# then shuffle them and merge them into a single dataset
-# outputs total dataset, the data X, and a label Y
-def createDatasetDual(truthPath, liePath):
-  dfT = createDatasetSingle(truthPath, True)
-  dfL = createDatasetSingle(liePath, False)
-  dfTotal = helpers.veticalMerge(dfT, dfL, shuffle=True)
-
-  X, Y = dfTotal.drop(columns = ["Result"]), dfTotal["Result"]
-
-  return dfTotal, X, Y
-
 # input a truthpath and a liepath, create a dual dataset and create a train
 # test split based on the testRatio
 # outputs total train, train with x, train with y, test with x, and test with y
-def createDatasetGeneral(truthPath, liePath, testRatio, byPerson = False, personlst = []):
+def createDatasetRF(truthPath, liePath, testRatio, byPerson = False, personlst = []):
   dfT = createDatasetSingle(truthPath, True)
   dfL = createDatasetSingle(liePath, False)
   
@@ -54,6 +42,63 @@ def createDatasetGeneral(truthPath, liePath, testRatio, byPerson = False, person
   Train = Train.reset_index().drop(columns = ["index", "Person", "level_0"])
 
   return Train, Xtrain, Ytrain, Xtest, Ytest
+
+def createDatasetLSTM(truthPath, liePath, testRatio, numFrames=10, minConfidence=0.9, byPerson=False, personlst = []):
+  dfT = createDatasetSingle(truthPath, True)
+  dfL = createDatasetSingle(liePath, False)
+
+  dfMap = {dfT:1, dfL:0}
+
+  Xtrain, Ytrain, Xtest, Ytest = [], [], [], []
+
+  for data in dfMap:
+
+    if byPerson:
+      Train, Test = helpers.shuffleByPerson(data, lst = personlst)
+    elif not byPerson:
+      Train, Test = helpers.shuffleByPerson(data, ratio = testRatio)
+
+    trainGroups = Train.groupby("Person")
+    for i in trainGroups:
+      currData = trainGroups.get_group(i)
+
+      for _ in range(currData.shape[0]):
+        bad_frames = np.where(currData["Confidence"] < minConfidence)[0]
+
+        good = True
+
+        for i in range(numFrames, currData.shape[0]):
+          for j in range(i - numFrames, i):
+            if j in bad_frames:
+              good = False
+
+          if not good: 
+            continue
+  
+          Xtrain.append(currData.iloc[i - numFrames: i])
+          Ytrain.append(dfMap[data])
+      
+    testGroups = Test.groupby("Person")
+    for i in testGroups:
+      currData = testGroups.get_group(i)
+
+      for _ in range(currData.shape[0]):
+        bad_frames = np.where(currData["Confidence"] < minConfidence)[0]
+
+        good = True
+
+        for i in range(numFrames, currData.shape[0]):
+          for j in range(i - numFrames, i):
+            if j in bad_frames:
+              good = False
+
+          if not good: 
+            continue
+          
+          Xtest.append(currData.iloc[i - numFrames: i])
+          Ytest.append(dfMap[data])
+
+  return Xtrain, Ytrain, Xtest, Ytest
 
 # after the model is trained, predict the video output from the path
 # use tensorflow if modelName = tf, use sklearn if modelName = sk
@@ -84,9 +129,8 @@ def perdictSingleVideo(path, modelName, modelObj, keepList=featuresToKeep):
 
   print("Lie Possibility: ", round(counterLie/res.shape[0] * 100, 2), "%")
   print("Truth Possibility: ", round(counterTrue/res.shape[0]* 100, 2), "%")
-  
 
-def preprocessing(folderPath, trueOrFalse, minConfidence = 0.9, numOfFrames = 10, byPerson = False, personlst = []):
+def preprocessing(folderPath, trueOrFalse, minConfidence = 0.9, numOfFrames = 10):
   csv_files = glob.glob(os.path.join(folderPath, "*.csv"))
   dropped = 0
   data = []
@@ -169,7 +213,7 @@ def preprocessing(folderPath, trueOrFalse, minConfidence = 0.9, numOfFrames = 10
     #   data.append(csv_file.iloc[i - numOfFrames:i])
     #   label.append(1) if trueOrFalse else label.append(0)
 
-  return data, label
+  # return data, label
 
 
 def path_preprocessing(truthFolderPath, lieFolderPath, minConfidence = 0.9, numOfFrames = 10):
