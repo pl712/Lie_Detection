@@ -213,7 +213,7 @@ def preprocessing(folderPath, trueOrFalse, minConfidence = 0.9, numOfFrames = 10
     #   data.append(csv_file.iloc[i - numOfFrames:i])
     #   label.append(1) if trueOrFalse else label.append(0)
 
-  # return data, label
+  return data, label
 
 
 def path_preprocessing(truthFolderPath, lieFolderPath, minConfidence = 0.9, numOfFrames = 10):

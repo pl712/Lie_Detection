@@ -19,26 +19,27 @@ featuresToKeep = ["gaze_0_x","gaze_0_y","gaze_0_z","gaze_angle_x", "gaze_angle_y
 def perdictSingleVideo(path, modelObj, numOfFrames = 10, minConfidence = 0.9):
   
   for file in os.listdir(path):
-    if file.endswith('test.csv'):
+    if file.endswith('test3.csv'):
         df = pd.read_csv(path + file)
-        helpers.addGazeDelta(df)
+        #helpers.addGazeDelta(df)
         data = []
 
         index = numOfFrames
         indexs = set()
         
         bad_frame = np.where(df["confidence"] <= minConfidence)[0]
-        df = helpers.filterConfidence(df)
+        df = helpers.filterColumn(df)
         
         while index < len(df):
           if index not in bad_frame:
             data.append((df.iloc[index-numOfFrames:index]).to_numpy())
             index += 1
           else:
-            index += 11
+            index += 10
 
-        print(data)
-        modelObj.predict(data)
+
+        print(modelObj.predict(np.array(data)))
+
 
         
             
