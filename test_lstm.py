@@ -32,7 +32,7 @@ def perdictSingleVideo(path, modelObj, numOfFrames = 10, minConfidence = 0.9):
         
         while index < len(df):
           if index not in bad_frame:
-            data.append([df.iloc[index-numOfFrames:index]])
+            data.append((df.iloc[index-numOfFrames:index]).to_numpy())
             index += 1
           else:
             index += 11
