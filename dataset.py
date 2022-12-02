@@ -65,47 +65,30 @@ def createDatasetLSTM(truthPath, liePath, testRatio, numFrames=10, minConfidence
     
     print(f'Processing Train')
     trainGroups = Train.groupby("Person")
+
     for i in trainGroups.groups:
-      currData = trainGroups.get_group(i)
+      currData = trainGroups.get_group(i).sort_index()
       bad_frames = np.where(currData["confidence"] < minConfidence)[0]
       print(f'Processing Person {i}, shape of data is {currData.shape}')
+      
+      blocksLst = helpers.getLSTMBlocks(bad_frames.tolist(), currData.shape[0], blockSize=numFrames, start=0)
 
-      for _ in tqdm(range(currData.shape[0])):
-        
-        good = True
-
-        for i in range(numFrames, currData.shape[0]):
-          for j in range(i - numFrames, i):
-            if j in bad_frames:
-              good = False
-
-          if not good: 
-            continue
-  
-          Xtrain.append(currData.iloc[i - numFrames: i])
-          Ytrain.append(idx)
+      for i, j in tqdm(blocksLst):
+        Xtrain.append(currData.iloc[i:j].reset_index().drop(columns = ["index", "confidence", "Result", "Person"]))
+        Ytrain.append(idx)
       
     print(f'Processing Test')
     testGroups = Test.groupby("Person")
     for i in testGroups.groups:
-      currData = testGroups.get_group(i)
+      currData = testGroups.get_group(i).sort_index()
       bad_frames = np.where(currData["confidence"] < minConfidence)[0]
       print(f'Processing Person {i}, shape of data is {currData.shape}')
+      
+      blocksLst = helpers.getLSTMBlocks(bad_frames.tolist(), currData.shape[0], blockSize=numFrames, start=0)
 
-      for _ in tqdm(range(currData.shape[0])):
-        
-        good = True
-
-        for i in range(numFrames, currData.shape[0]):
-          for j in range(i - numFrames, i):
-            if j in bad_frames:
-              good = False
-
-          if not good: 
-            continue
-          
-          Xtest.append(currData.iloc[i - numFrames: i])
-          Ytest.append(idx)
+      for i, j in tqdm(blocksLst):
+        Xtest.append(currData.iloc[i:j].reset_index().drop(columns = ["index", "confidence", "Result", "Person"]))
+        Ytest.append(idx)
 
   return Xtrain, Ytrain, Xtest, Ytest
 

@@ -6,10 +6,26 @@ import sklearn.metrics as sk
 # import tensorflow_decision_forests as tfdf
 
 featuresToKeep = ["gaze_0_x","gaze_0_y","gaze_0_z","gaze_angle_x", "gaze_angle_y",
-                  "dgaze_0_x", "dgaze_0_y", "dgaze_angle_y", 
                   "AU01_r","AU04_r","AU10_r","AU12_r","AU45_r", 
                   "pose_Tx", "pose_Ty", "pose_Tz", "pose_Ry", 
                   "Result", "confidence", "Person"]
+
+def getLSTMBlocks(inputLst, dataLength, blockSize = 10, start = 0):
+  inputLst.sort()
+  
+  listOfRanges = []
+  
+  inputLst.append(dataLength)
+
+  while inputLst:
+    if (start + blockSize - 1) < inputLst[0]:
+      listOfRanges.append([start, start + blockSize - 1])
+      start += 1
+    else:
+      start = inputLst[0] + 1
+      inputLst.pop(0)
+
+  return listOfRanges
 
 def shuffleByPerson(df, ratio = 0.2, lst = []):
 
@@ -28,13 +44,13 @@ def shuffleByPerson(df, ratio = 0.2, lst = []):
 
         print(f"Persons 0 to {tempnum} are in the training set, and {tempnum + 1} to {df['Person'].iloc[-1]} are in the testing set")
         
-        return df.iloc[:index], df.iloc[index:]
+        return filterColumn(df.iloc[:index]), filterColumn(df.iloc[index:])
     else:
         
         Test = df.loc[~df['Person'].isin(lst)]
         Train = df.loc[df['Person'].isin(lst)]
 
-        return Train, Test
+        return filterColumn(Train), filterColumn(Test)
         
 def displayHeatmap(df):
     plt.figure(figsize=(16, 6))
