@@ -5,8 +5,8 @@ import pandas as pd
 import numpy as np
 from tqdm import tqdm
 
-# import tensorflow_decision_forests as tfdf
-# from sklearn.model_selection import train_test_split
+import tensorflow_decision_forests as tfdf
+from sklearn.model_selection import train_test_split
 
 import helpers
 
@@ -15,13 +15,14 @@ liePath = './processed_lie/'
 
 featuresToKeep = helpers.featuresToKeep
 
+newFeaturesToKeep = ["gaze_0_x","gaze_0_y","gaze_0_z","gaze_angle_x", "gaze_angle_y", "AU01_r","AU04_r","AU10_r","AU12_r","AU45_r","pose_Tx","pose_Ty", "pose_Tz", "pose_Ry"]
+
 # create a single dataset from a specified patha (must be all truth or all lie)
 def createDatasetSingle(path, truth):
   df = pd.concat(map(pd.read_csv, glob.glob(os.path.join(path+"*.csv")))).reset_index()
   helpers.addGazeDelta(df)
   helpers.addTFLabel(df, truth)
   df = helpers.filterColumn(df)
-  #df = helpers.filterConfidence(df).reset_index().drop(columns = ["index"])
 
   return df
 
@@ -70,20 +71,16 @@ def createDatasetLSTM(truthPath, liePath, testRatio, numFrames=10, minConfidence
       bad_frames = np.where(currData["confidence"] < minConfidence)[0]
       print(f'Processing Person {i}, shape of data is {currData.shape}')
 
-      for _ in tqdm(range(currData.shape[0])):
+      index = numFrames
+      next_index = numFrames
         
-        good = True
-
-        for i in range(numFrames, currData.shape[0]):
-          for j in range(i - numFrames, i):
-            if j in bad_frames:
-              good = False
-
-          if not good: 
-            continue
-  
-          Xtrain.append(currData.iloc[i - numFrames: i])
+      while index < currData.shape[0]:
+        if index in bad_frames:
+            index += numFrames
+        else:
+          Xtrain.append(currData.iloc[index-numFrames:index])
           Ytrain.append(idx)
+          index += 1
       
     print(f'Processing Test')
     testGroups = Test.groupby("Person")
@@ -139,111 +136,59 @@ def perdictSingleVideo(path, modelName, modelObj, keepList=featuresToKeep):
   print("Lie Possibility: ", round(counterLie/res.shape[0] * 100, 2), "%")
   print("Truth Possibility: ", round(counterTrue/res.shape[0]* 100, 2), "%")
 
-def preprocessing(folderPath, trueOrFalse, minConfidence = 0.9, numOfFrames = 10):
-  csv_files = glob.glob(os.path.join(folderPath, "*.csv"))
-  dropped = 0
+def LSTM_preprocessing(truthPath, liePath, minConfidence = 0.9, numOfFrames = 10, byPerson = False):
+
   data = []
   label = []
 
-  dfs = []
-  for fn in csv_files:
-      df = pd.read_csv(fn)
-      df = helpers.filterColumn(df)
-      dfs.append(df)
+  if not byPerson:
 
-  full_df = pd.concat(dfs, axis=0, ignore_index=False)
-  full_df = full_df[full_df["confidence"] > minConfidence]
+    for file in sorted(os.listdir(truthPath)):
+      if file.endswith(".csv"):
+        df = pd.read_csv(truthPath + file)
+        
+        bad_frame = set(np.where(df["confidence"] < minConfidence)[0])
+        df = helpers.filterColumn(df, colList=newFeaturesToKeep)
 
-  maxes = full_df.max(axis=0)
-  maxes = np.where(maxes > 0, maxes, 1)
+        index = numOfFrames
+        next_index = numOfFrames
+        
+        while index < len(df):
+          if index not in bad_frame and index >= next_index:
+            data.append((df.iloc[index-numOfFrames:index]).to_numpy())
+            label.append(1)
+          elif index in bad_frame:
+            next_index = index + numOfFrames
+          index += 1
 
-  for i, df in enumerate(dfs):
-      if df.shape[1] != maxes.shape[0]:
-          print(f"CSV file {csv_files[i]} only has {df.shape[1]} columns")
-          continue
+    for file in sorted(os.listdir(liePath)):
+      if file.endswith(".csv"):
+        df = pd.read_csv(liePath + file)
+        
+        bad_frame = set(np.where(df["confidence"] < minConfidence)[0])
+        df= helpers.filterColumn(df, colList=newFeaturesToKeep)
 
-      #df = df / maxes
-      bad = np.where(df["confidence"] <= minConfidence)[0]
-      bad = {b: 1 for b in bad}
+        index = numOfFrames
+        next_index = numOfFrames
+        
+        while index < len(df):
+          if index not in bad_frame and index >= next_index:
+            data.append((df.iloc[index-numOfFrames:index]).to_numpy())
+            label.append(0)
+          elif index in bad_frame:
+            next_index = index + numOfFrames
+          index += 1
 
-      for i in range(numOfFrames, df.shape[0]):
-          good_frame = True
-          for j in range(i - numOfFrames, i):
-              if j in bad:
-                  good_frame = False
-                  dropped += 1
+    data = np.array(data)
+    label = np.array(label)
+    random.seed(random.randint(1, 100))
 
-          if not good_frame:
-              continue
+    # Create an array of indices, then shuffle it
+    indices = np.arange(len(data)).astype(int)
+    np.random.shuffle(indices)
 
-          data.append(df.iloc[i - numOfFrames: i])
-          label.append(int(trueOrFalse))
-
-
-  # # #perform normalization
-  # total_csv = []
-  # for file in csv_files:
-  #   csv_file = pd.read_csv(file)
-  #   csv_file = helpers.filterColumn(csv_file)
-
-  #   if total_csv == []:
-  #     total_csv = np.array(csv_file)
-  #   else:
-  #     # take out frames with confidence less than 0.9
-  #     for i in range(len(csv_file)):
-  #       if csv_file.iloc[i]["confidence"] <= minConfidence:
-  #         total_csv = np.vstack((total_csv, np.array(csv_file.iloc[i])))
-  # 
-  # max_total = np.amax(total_csv, axis = 0)
-
-  # for file in csv_files: 
-  #   csv_file = pd.read_csv(file)
-  #   csv_file = helpers.filterColumn(csv_file)
-  #   for i in range(csv_file.shape[0]):
-  #     for j in range(csv_file.shape[1]):
-  #       if max_total[j] != 0:
-  #         csv_file.iloc[i].iloc[j] = csv_file.iloc[i].iloc[j] / max_total[j]
-
-    # for i in range(numOfFrames, len(csv_file)):
-    #   good_frame = True
-
-    #   # if any frame has previous frames with confidence below threhold, skip it 
-    #   for j in range(i - numOfFrames, i):
-    #     if csv_file.iloc[j]["confidence"] <= minConfidence:
-    #       good_frame = False
-    #       dropped += 1
-    #       break
-
-    #   # if it is a good frame, let's process it 
-    #   if not good_frame:
-    #     continue
-    #   
-    #   # append frames and labels to data and label array
-    #   data.append(csv_file.iloc[i - numOfFrames:i])
-    #   label.append(1) if trueOrFalse else label.append(0)
+    # Same order of indices for both X and Y
+    data  = data[indices]
+    label = label[indices]
 
   return data, label
-
-
-def path_preprocessing(truthFolderPath, lieFolderPath, minConfidence = 0.9, numOfFrames = 10):
-  truth_data, truth_label = preprocessing(truthFolderPath, True, minConfidence, numOfFrames)
-  lie_data, lie_label = preprocessing(lieFolderPath, False, minConfidence, numOfFrames) 
-  
-  total_X = np.array(truth_data + lie_data)
-  total_Y = np.array(truth_label + lie_label)
-  random.seed(random.randint(1, 100))
-
-  # Create an array of indices, then shuffle it
-  indices = np.arange(len(total_X)).astype(int)
-  np.random.shuffle(indices)
-
-  # Same order of indices for both X and Y
-  total_X = total_X[indices]
-  total_Y = total_Y[indices]
-
-  # # This shuffles X and Y independently
-  # random.shuffle(total_X)
-  # random.shuffle(total_Y)
-
-
-  return total_X, total_Y

@@ -3,7 +3,7 @@ import numpy as np
 import matplotlib.pyplot as plt
 import seaborn as sns
 import sklearn.metrics as sk
-# import tensorflow_decision_forests as tfdf
+import tensorflow_decision_forests as tfdf
 
 featuresToKeep = ["gaze_0_x","gaze_0_y","gaze_0_z","gaze_angle_x", "gaze_angle_y",
                   "dgaze_0_x", "dgaze_0_y", "dgaze_angle_y", 
