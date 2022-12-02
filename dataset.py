@@ -139,14 +139,6 @@ def perdictSingleVideo(path, modelName, modelObj, keepList=featuresToKeep):
   print("Lie Possibility: ", round(counterLie/res.shape[0] * 100, 2), "%")
   print("Truth Possibility: ", round(counterTrue/res.shape[0]* 100, 2), "%")
 
-
-
-
-
-
-
-
-
 def preprocessing(folderPath, trueOrFalse, minConfidence = 0.9, numOfFrames = 10):
   csv_files = glob.glob(os.path.join(folderPath, "*.csv"))
   dropped = 0
@@ -170,7 +162,7 @@ def preprocessing(folderPath, trueOrFalse, minConfidence = 0.9, numOfFrames = 10
           print(f"CSV file {csv_files[i]} only has {df.shape[1]} columns")
           continue
 
-      df = df / maxes
+      #df = df / maxes
       bad = np.where(df["confidence"] <= minConfidence)[0]
       bad = {b: 1 for b in bad}
 
@@ -230,7 +222,7 @@ def preprocessing(folderPath, trueOrFalse, minConfidence = 0.9, numOfFrames = 10
     #   data.append(csv_file.iloc[i - numOfFrames:i])
     #   label.append(1) if trueOrFalse else label.append(0)
 
-  # return data, label
+  return data, label
 
 
 def path_preprocessing(truthFolderPath, lieFolderPath, minConfidence = 0.9, numOfFrames = 10):

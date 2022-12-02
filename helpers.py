@@ -36,8 +36,6 @@ def shuffleByPerson(df, ratio = 0.2, lst = []):
 
         return Train, Test
         
-
-
 def displayHeatmap(df):
     plt.figure(figsize=(16, 6))
     sns.heatmap(df.corr(), vmin=-1, vmax=1, annot=True, cmap='BrBG')
