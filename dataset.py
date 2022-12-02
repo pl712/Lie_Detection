@@ -153,7 +153,7 @@ def preprocessing(folderPath, trueOrFalse, minConfidence = 0.9, numOfFrames = 10
           print(f"CSV file {csv_files[i]} only has {df.shape[1]} columns")
           continue
 
-      df = df / maxes
+      #df = df / maxes
       bad = np.where(df["confidence"] <= minConfidence)[0]
       bad = {b: 1 for b in bad}
 
