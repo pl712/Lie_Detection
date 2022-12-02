@@ -3,9 +3,10 @@ import glob
 import random
 import pandas as pd
 import numpy as np
+from tqdm import tqdm
 
-import tensorflow_decision_forests as tfdf
-from sklearn.model_selection import train_test_split
+# import tensorflow_decision_forests as tfdf
+# from sklearn.model_selection import train_test_split
 
 import helpers
 
@@ -14,12 +15,13 @@ liePath = './processed_lie/'
 
 featuresToKeep = helpers.featuresToKeep
 
-# create a single dataset from a specified path (must be all truth or all lie)
+# create a single dataset from a specified patha (must be all truth or all lie)
 def createDatasetSingle(path, truth):
   df = pd.concat(map(pd.read_csv, glob.glob(os.path.join(path+"*.csv")))).reset_index()
   helpers.addGazeDelta(df)
   helpers.addTFLabel(df, truth)
-  df = helpers.filterConfidence(df).reset_index().drop(columns = ["index"])
+  df = helpers.filterColumn(df)
+  #df = helpers.filterConfidence(df).reset_index().drop(columns = ["index"])
 
   return df
 
@@ -47,24 +49,29 @@ def createDatasetLSTM(truthPath, liePath, testRatio, numFrames=10, minConfidence
   dfT = createDatasetSingle(truthPath, True)
   dfL = createDatasetSingle(liePath, False)
 
-  dfMap = {dfT:1, dfL:0}
+  dfMap = {1:dfT, 0:dfL}
 
   Xtrain, Ytrain, Xtest, Ytest = [], [], [], []
 
-  for data in dfMap:
+  idxTotext = {0:"Lie", 1:"Truth"}
 
+  for idx in dfMap:
+    print(f'Processing {idxTotext[idx]}')
+    
     if byPerson:
-      Train, Test = helpers.shuffleByPerson(data, lst = personlst)
+      Train, Test = helpers.shuffleByPerson(dfMap[idx], lst = personlst)
     elif not byPerson:
-      Train, Test = helpers.shuffleByPerson(data, ratio = testRatio)
-
+      Train, Test = helpers.shuffleByPerson(dfMap[idx], ratio = testRatio)
+    
+    print(f'Processing Train')
     trainGroups = Train.groupby("Person")
-    for i in trainGroups:
+    for i in trainGroups.groups:
       currData = trainGroups.get_group(i)
+      bad_frames = np.where(currData["confidence"] < minConfidence)[0]
+      print(f'Processing Person {i}, shape of data is {currData.shape}')
 
-      for _ in range(currData.shape[0]):
-        bad_frames = np.where(currData["Confidence"] < minConfidence)[0]
-
+      for _ in tqdm(range(currData.shape[0])):
+        
         good = True
 
         for i in range(numFrames, currData.shape[0]):
@@ -76,15 +83,17 @@ def createDatasetLSTM(truthPath, liePath, testRatio, numFrames=10, minConfidence
             continue
   
           Xtrain.append(currData.iloc[i - numFrames: i])
-          Ytrain.append(dfMap[data])
+          Ytrain.append(idx)
       
+    print(f'Processing Test')
     testGroups = Test.groupby("Person")
-    for i in testGroups:
+    for i in testGroups.groups:
       currData = testGroups.get_group(i)
+      bad_frames = np.where(currData["confidence"] < minConfidence)[0]
+      print(f'Processing Person {i}, shape of data is {currData.shape}')
 
-      for _ in range(currData.shape[0]):
-        bad_frames = np.where(currData["Confidence"] < minConfidence)[0]
-
+      for _ in tqdm(range(currData.shape[0])):
+        
         good = True
 
         for i in range(numFrames, currData.shape[0]):
@@ -96,7 +105,7 @@ def createDatasetLSTM(truthPath, liePath, testRatio, numFrames=10, minConfidence
             continue
           
           Xtest.append(currData.iloc[i - numFrames: i])
-          Ytest.append(dfMap[data])
+          Ytest.append(idx)
 
   return Xtrain, Ytrain, Xtest, Ytest
 
