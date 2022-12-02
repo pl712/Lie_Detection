@@ -66,43 +66,55 @@ def createDatasetLSTM(truthPath, liePath, testRatio, numFrames=10, minConfidence
     
     print(f'Processing Train')
     trainGroups = Train.groupby("Person")
+
     for i in trainGroups.groups:
-      currData = trainGroups.get_group(i)
+      currData = trainGroups.get_group(i).sort_index()
       bad_frames = np.where(currData["confidence"] < minConfidence)[0]
       print(f'Processing Person {i}, shape of data is {currData.shape}')
+      
+      blocksLst = helpers.getLSTMBlocks(bad_frames.tolist(), currData.shape[0], blockSize=numFrames, start=0)
 
-      index = numFrames
-      next_index = numFrames
-        
-      while index < currData.shape[0]:
-        if index in bad_frames:
-            index += numFrames
-        else:
-          Xtrain.append(currData.iloc[index-numFrames:index])
-          Ytrain.append(idx)
-          index += 1
+      for i, j in tqdm(blocksLst):
+        Xtrain.append(currData.iloc[i:j].reset_index().drop(columns = ["index", "confidence", "Result", "Person"]).to_numpy())
+        Ytrain.append(idx)
       
     print(f'Processing Test')
     testGroups = Test.groupby("Person")
     for i in testGroups.groups:
-      currData = testGroups.get_group(i)
+      currData = testGroups.get_group(i).sort_index()
       bad_frames = np.where(currData["confidence"] < minConfidence)[0]
       print(f'Processing Person {i}, shape of data is {currData.shape}')
+      
+      blocksLst = helpers.getLSTMBlocks(bad_frames.tolist(), currData.shape[0], blockSize=numFrames, start=0)
 
-      for _ in tqdm(range(currData.shape[0])):
-        
-        good = True
+      for i, j in tqdm(blocksLst):
+        Xtest.append(currData.iloc[i:j].reset_index().drop(columns = ["index", "confidence", "Result", "Person"]).to_numpy())
+        Ytest.append(idx)
 
-        for i in range(numFrames, currData.shape[0]):
-          for j in range(i - numFrames, i):
-            if j in bad_frames:
-              good = False
+  Xtrain = np.array(Xtrain)
+  Ytrain = np.array(Ytrain)
+  Xtest = np.array(Xtest)
+  Ytest = np.array(Ytest)
 
-          if not good: 
-            continue
-          
-          Xtest.append(currData.iloc[i - numFrames: i])
-          Ytest.append(idx)
+  random.seed(random.randint(1, 100))
+
+  # Create an array of indices, then shuffle it
+  indices = np.arange(len(Xtrain)).astype(int)
+  np.random.shuffle(indices)
+
+  # Same order of indices for both X and Y
+  Xtrain  = Xtrain[indices]
+  Ytrain = Ytrain[indices]
+
+  random.seed(random.randint(1, 100))
+
+  # Create an array of indices, then shuffle it
+  indices = np.arange(len(Xtest)).astype(int)
+  np.random.shuffle(indices)
+
+  # Same order of indices for both X and Y
+  Xtest  = Xtest[indices]
+  Ytest = Ytest[indices]
 
   return Xtrain, Ytrain, Xtest, Ytest
 

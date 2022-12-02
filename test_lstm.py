@@ -4,9 +4,8 @@ import tensorflow_decision_forests as tfdf
 import os
 import helpers
 
-featuresToKeep = ["gaze_0_x","gaze_0_y","gaze_0_z","gaze_angle_x", "gaze_angle_y",
-                  "dgaze_0_x", "dgaze_0_y", "dgaze_angle_y", 
-                  "AU01_r","AU04_r","AU10_r","AU12_r","AU45_r"]
+featuresToKeep = ["gaze_0_x","gaze_0_y","gaze_0_z","gaze_angle_x", "gaze_angle_y", 
+                  "AU01_r","AU04_r","AU10_r","AU12_r","AU45_r","pose_Tx","pose_Ty", "pose_Tz", "pose_Ry"]
 
 #"pose_Tx", "pose_Ty", "pose_Tz", "pose_Ry"
 
@@ -20,15 +19,14 @@ def perdictSingleVideo(path, modelObj, numOfFrames = 10, minConfidence = 0.9):
   for file in os.listdir(path):
     if file.endswith('test.csv'):
         df = pd.read_csv(path + file)
-        helpers.addGazeDelta(df)
-        print(df)
+        df = helpers.addGazeDelta(df)
         data = []
 
         index = numOfFrames
         next_index = numOfFrames
         
         bad_frame = set(np.where(df["confidence"] <= minConfidence)[0])
-        helpers.filterColumn(df, colList=featuresToKeep)
+        df = helpers.filterColumn(df, colList=featuresToKeep)
         
         while index < len(df):
           if index not in bad_frame and index >= next_index:
@@ -37,7 +35,9 @@ def perdictSingleVideo(path, modelObj, numOfFrames = 10, minConfidence = 0.9):
             next_index = index + numOfFrames
           index += 1
 
-  print(data)
+  print(np.array(data).shape)
+  print(modelObj.predict(np.array(data)))
+
 
 
 

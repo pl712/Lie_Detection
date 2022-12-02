@@ -1,3 +1,11 @@
+import os
+import glob
+import random
+import pandas as pd
+import numpy as np
+
+import helpers
+
 def preprocessing(folderPath, trueOrFalse, minConfidence = 0.9, numOfFrames = 10):
   csv_files = glob.glob(os.path.join(folderPath, "*.csv"))
   dropped = 0
