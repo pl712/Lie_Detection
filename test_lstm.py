@@ -17,7 +17,7 @@ featuresToKeep = ["gaze_0_x","gaze_0_y","gaze_0_z","gaze_angle_x", "gaze_angle_y
 def perdictSingleVideo(path, modelObj, numOfFrames = 10, minConfidence = 0.9):
   
   for file in os.listdir(path):
-    if file.endswith('test.csv'):
+    if file.endswith('test1.csv'):
         df = pd.read_csv(path + file)
         df = helpers.addGazeDelta(df)
         data = []
@@ -36,7 +36,8 @@ def perdictSingleVideo(path, modelObj, numOfFrames = 10, minConfidence = 0.9):
           index += 1
 
   print(np.array(data).shape)
-  print(modelObj.predict(np.array(data)))
+  prediction = modelObj.predict(np.array(data))
+  return prediction
 
 
 
