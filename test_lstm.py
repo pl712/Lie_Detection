@@ -5,7 +5,8 @@ import os
 import helpers
 
 featuresToKeep = ["gaze_0_x","gaze_0_y","gaze_0_z","gaze_angle_x", "gaze_angle_y", 
-                  "AU01_r","AU04_r","AU10_r","AU12_r","AU45_r","pose_Tx","pose_Ty", "pose_Tz", "pose_Ry"]
+                  "AU01_r","AU04_r","AU10_r","AU12_r","AU45_r"]
+#["pose_Tx","pose_Ty", "pose_Tz", "pose_Ry"]
 
 #"pose_Tx", "pose_Ty", "pose_Tz", "pose_Ry"
 
@@ -14,19 +15,27 @@ featuresToKeep = ["gaze_0_x","gaze_0_y","gaze_0_z","gaze_angle_x", "gaze_angle_y
 # the modelObj is the training model object
 # keepList is the list of features used to predict
 # prints the possibility of lie and truth in the video
-def perdictSingleVideo(path, modelObj, numOfFrames = 10, minConfidence = 0.9):
+def perdictSingleVideo(path, modelObj, label, numOfFrames = 10, minConfidence = 0.9):
   
+  prediction = []
   for file in os.listdir(path):
-    if file.endswith('test1.csv'):
-        df = pd.read_csv(path + file)
-        df = helpers.addGazeDelta(df)
-        data = []
+    data = []
 
-        index = numOfFrames
-        next_index = numOfFrames
-        
+    try:
+      if file.endswith('.csv'):
+
+        if file.endswith('L.csv'):
+          label = 0
+        elif file.endswith('T.csv'):
+          label = 1
+
+        df = pd.read_csv(path + file)
+
         bad_frame = set(np.where(df["confidence"] <= minConfidence)[0])
         df = helpers.filterColumn(df, colList=featuresToKeep)
+        
+        index = numOfFrames
+        next_index = numOfFrames
         
         while index < len(df):
           if index not in bad_frame and index >= next_index:
@@ -35,8 +44,25 @@ def perdictSingleVideo(path, modelObj, numOfFrames = 10, minConfidence = 0.9):
             next_index = index + numOfFrames
           index += 1
 
-  print(np.array(data).shape)
-  prediction = modelObj.predict(np.array(data))
+        video_prediction = modelObj.predict(np.array(data))
+      
+        accuracy = 0
+        for frame in video_prediction:
+          if frame > 0.5:
+            frame = 1
+          else:
+            frame = 0
+          
+          if frame == label:
+            accuracy += 1
+        
+        accuracy = accuracy / len(video_prediction)
+        print(file, ' accuracy: ', accuracy, ' label: ', label)
+        prediction.append(accuracy)
+    except Exception as e:
+      print('error in ', file, ' ', e)
+      continue
+
   return prediction
 
 
