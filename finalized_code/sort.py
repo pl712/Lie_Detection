@@ -3,24 +3,24 @@ import shutil
 import pandas as pd
 
 #MU3D  
-# # Set the source directory where your files are located
-# src_dir = "/Users/peter/Desktop/Lie_Detection/processed/"
+# Set the source directory where your files are located
+src_dir = "/Users/peter/Desktop/MU3D/"
 
-# # Set the destination directories for the two groups of files
-# group_1_dir = "/Users/peter/Desktop/Lie_Detection/finalized_code/data/mu3d/truth/"
-# group_2_dir = "/Users/peter/Desktop/Lie_Detection/finalized_code/data/mu3d/lie/"
+# Set the destination directories for the two groups of files
+group_1_dir = "/Users/peter/Desktop/Lie_Detection/finalized_code/data/OpenFace/MU3D/truth/"
+group_2_dir = "/Users/peter/Desktop/Lie_Detection/finalized_code/data/OpenFace/MU3D/lie/"
 
-# # Loop through each file in the source directory
-# for filename in os.listdir(src_dir):
-#     # Check if the file is a CSV file and has the correct naming convention
-#     if filename.endswith(".csv") and "_" in filename:
-#         # Split the filename into its components
-#         name_parts = filename.split("_")
-#         # Determine which group the file belongs to based on the last two characters of the second component
-#         if name_parts[1][-6:-4] in ["PT", "NL"]:
-#             shutil.move(os.path.join(src_dir, filename), os.path.join(group_1_dir, filename))
-#         elif name_parts[1][-6:-4] in ["NT", "PL"]:
-#             shutil.move(os.path.join(src_dir, filename), os.path.join(group_2_dir, filename))
+# Loop through each file in the source directory
+for filename in os.listdir(src_dir):
+    # Check if the file is a CSV file and has the correct naming convention
+    if filename.endswith(".csv") and "_" in filename:
+        # Split the filename into its components
+        name_parts = filename.split("_")
+        # Determine which group the file belongs to based on the last two characters of the second component
+        if name_parts[1][-5:-4] in ["T"]:
+            shutil.move(os.path.join(src_dir, filename), os.path.join(group_1_dir, filename))
+        elif name_parts[1][-5:-4] in ["L"]:
+            shutil.move(os.path.join(src_dir, filename), os.path.join(group_2_dir, filename))
 
 
 #BOL
