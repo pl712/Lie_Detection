@@ -7,7 +7,7 @@ from tqdm import tqdm
 
 from sklearn.model_selection import train_test_split
 
-import helpers
+from finalized_code import helpers
 
 truthPath = './processed_truth/'
 liePath = './processed_lie/'
@@ -148,6 +148,7 @@ def preprocessing(truthPath, liePath, additionalPath=None, minConfidence = 0.9, 
           index += 1
 
   for datasetPath in liePath:
+    print(f"Processing {datasetPath}")
     for file in sorted(os.listdir(datasetPath)):
       if file.endswith(".csv"):
         df = pd.read_csv(datasetPath + file)

@@ -2,7 +2,7 @@ import pandas as pd
 import numpy as np
 import tensorflow_decision_forests as tfdf
 import os
-import helpers
+from finalized_code import helpers
 
 featuresToKeep = ["gaze_0_x","gaze_0_y","gaze_0_z","gaze_angle_x", "gaze_angle_y", 
                   "AU01_r","AU04_r","AU10_r","AU12_r","AU45_r"]
