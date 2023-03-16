@@ -118,16 +118,20 @@ def createDatasetLSTM(truthPath, liePath, testRatio, numFrames=10, minConfidence
 
   return Xtrain, Ytrain, Xtest, Ytest
 
-def preprocessing(truthPath, liePath, additionalPath=None, minConfidence = 0.9, numOfFrames = 10, byPerson = False):
+def prep(truthpath):
+  for i in truthpath:
+    os.listdir(i)
+
+def preprocessing(truthPath, liePath, additionalPath=None, minConfidence = 0.9, numOfFrames = 10):
 
   data = []
   label = []
 
-  if not byPerson:
-
-    for file in sorted(os.listdir(truthPath)):
+  for datasetPath in truthPath:
+    print(f"Processing {datasetPath}")
+    for file in sorted(os.listdir(datasetPath)):
       if file.endswith(".csv"):
-        df = pd.read_csv(truthPath + file)
+        df = pd.read_csv(datasetPath + file)
         
         bad_frame = set(np.where(df["confidence"] < minConfidence)[0])
         df = helpers.filterColumn(df, colList=newFeaturesToKeep)
@@ -143,9 +147,10 @@ def preprocessing(truthPath, liePath, additionalPath=None, minConfidence = 0.9, 
             next_index = index + numOfFrames
           index += 1
 
-    for file in sorted(os.listdir(liePath)):
+  for datasetPath in liePath:
+    for file in sorted(os.listdir(datasetPath)):
       if file.endswith(".csv"):
-        df = pd.read_csv(liePath + file)
+        df = pd.read_csv(datasetPath + file)
         
         bad_frame = set(np.where(df["confidence"] < minConfidence)[0])
         df= helpers.filterColumn(df, colList=newFeaturesToKeep)
@@ -161,38 +166,38 @@ def preprocessing(truthPath, liePath, additionalPath=None, minConfidence = 0.9, 
             next_index = index + numOfFrames
           index += 1
 
-    if additionalPath:
-      for file in sorted(os.listdir(additionalPath)):
-        if file.endswith(".csv"):
-          df = pd.read_csv(additionalPath + file)
-          
-          bad_frame = set(np.where(df["confidence"] < minConfidence)[0])
-          df= helpers.filterColumn(df, colList=newFeaturesToKeep)
+  # if additionalPath:
+  #   for file in sorted(os.listdir(additionalPath)):
+  #     if file.endswith(".csv"):
+  #       df = pd.read_csv(additionalPath + file)
+        
+  #       bad_frame = set(np.where(df["confidence"] < minConfidence)[0])
+  #       df= helpers.filterColumn(df, colList=newFeaturesToKeep)
 
-          index = numOfFrames
-          next_index = numOfFrames
-          
-          while index < len(df):
-            if index not in bad_frame and index >= next_index:
-              data.append((df.iloc[index-numOfFrames:index]).to_numpy())
-              if file.endswith("T.csv"):
-                label.append(1)
-              elif file.endswith("L.csv"):
-                label.append(0)
-            elif index in bad_frame:
-              next_index = index + numOfFrames
-            index += 1
+  #       index = numOfFrames
+  #       next_index = numOfFrames
+        
+  #       while index < len(df):
+  #         if index not in bad_frame and index >= next_index:
+  #           data.append((df.iloc[index-numOfFrames:index]).to_numpy())
+  #           if file.endswith("T.csv"):
+  #             label.append(1)
+  #           elif file.endswith("L.csv"):
+  #             label.append(0)
+  #         elif index in bad_frame:
+  #           next_index = index + numOfFrames
+  #         index += 1
 
-    data = np.array(data)
-    label = np.array(label)
-    random.seed(random.randint(1, 100))
+  data = np.array(data)
+  label = np.array(label)
+  random.seed(random.randint(1, 100))
 
-    # Create an array of indices, then shuffle it
-    indices = np.arange(len(data)).astype(int)
-    np.random.shuffle(indices)
+  # Create an array of indices, then shuffle it
+  indices = np.arange(len(data)).astype(int)
+  np.random.shuffle(indices)
 
-    # Same order of indices for both X and Y
-    data  = data[indices]
-    label = label[indices]
+  # Same order of indices for both X and Y
+  data  = data[indices]
+  label = label[indices]
 
   return data, label
