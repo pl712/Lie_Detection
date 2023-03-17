@@ -7,7 +7,7 @@ from tqdm import tqdm
 
 from sklearn.model_selection import train_test_split
 
-from finalized_code import helpers
+import helpers
 
 truthPath = './processed_truth/'
 liePath = './processed_lie/'
